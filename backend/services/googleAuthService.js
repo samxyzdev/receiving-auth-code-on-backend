@@ -1,29 +1,35 @@
-// const clientId = "594555697613-18p3s2o6hl7mvc3gj0o2a2bg7b27tj9m.apps.googleusercontent.com";
-// const clientSecret = "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";
+import { OAuth2Client } from "google-auth-library";
+
+const clientId =
+  "594555697613-18p3s2o6hl7mvc3gj0o2a2bg7b27tj9m.apps.googleusercontent.com";
+const clientSecret = "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";
 const redirectUrl = "http://localhost:4000/auth/google/callback";
+
+const client = new OAuth2Client({
+  clientId,
+  clientSecret,
+  redirectUri: redirectUrl,
+});
+
+export function generateGoogleAuthUrl() {
+  return client.generateAuthUrl({
+    scope: ["email", "profile", "openid"],
+    prompt: "consent",
+    // login_hint: "anuragprocodrr@gmail.com",
+  });
+}
 
 export async function fetchUserFromGoogle(code) {
   console.log("Running fetchIdToken function...");
-  const payload = `code=${code}&client_id=${clientId}&client_secret=${clientSecret}&redirect_uri=${redirectUrl}&grant_type=authorization_code`;
 
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: payload,
+  const { tokens } = await client.getToken(code);
+  console.log(tokens);
+
+  const loginTicket = await client.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: clientId,
   });
 
-  const data = await response.json();
-  if (data.error) {
-    console.log("Error occurred");
-    console.log(data);
-    return;
-  }
-
-  const userToken = data.id_token.split(".")[1];
-  const userData = JSON.parse(atob(userToken));
-
-  console.log(userData);
+  const userData = loginTicket.getPayload();
   return userData;
 }

@@ -9,4 +9,7 @@ if (sid) {
     window.opener.postMessage({ message: "success" });
     window.close();
   }
+} else {
+  window.opener.postMessage({ message: "failure" });
+  window.close();
 }
